@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "hardware/pwm.h"
 
 #define gpio_led_red 18
 #define gpio_led_green 19
@@ -71,9 +72,17 @@ void pisca_led_branco()
 
 void acionar_buzzer()
 {
-  gpio_put(gpio_buzzer, 1); // Liga o buzzer
-  sleep_ms(2000);           // Emite som por 2000ms
-  gpio_put(gpio_buzzer, 0); // Desliga o buzzer
+  gpio_set_function(gpio_buzzer, GPIO_FUNC_PWM);       // Configura pino como saída PWM
+  uint slice_num = pwm_gpio_to_slice_num(gpio_buzzer); // Obter o slice do PWM
+
+  pwm_set_clkdiv(slice_num, 125.0);     // Configurar divisor de clock para 4 kHz
+  pwm_set_wrap(slice_num, 255);         // Configurar o ciclo de trabalho de 0 a 255
+  pwm_set_gpio_level(gpio_buzzer, 150); // Ciclo de trabalho de 200 (amplitude do som)
+  pwm_set_enabled(slice_num, true);     // Ativar o PWM
+
+  sleep_ms(2000); // Manter o som por 2 segundos
+
+  pwm_set_enabled(slice_num, false); // Desativar o PWM
 }
 
 int main()
